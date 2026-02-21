@@ -1,28 +1,41 @@
 package br.com.nexdom.estoque_backend.services;
 
 import br.com.nexdom.estoque_backend.domain.enums.TipoMovimentacao;
+import br.com.nexdom.estoque_backend.exceptions.EstoqueInvalidoException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MovimentacaoEstoqueServiceTest {
 
-    @Test
-    public void registrarMovimentacao(){
+    private final MovimentacaoEstoqueService ms = new MovimentacaoEstoqueService();
 
+    @Test
+    void realizarEntrada() {
         int estoque = 5;
         int qtd = 10;
-        TipoMovimentacao tpEntrada = TipoMovimentacao.ENTRADA;
-        TipoMovimentacao tpSaida = TipoMovimentacao.SAIDA;
+        int resultado = ms.registrarMovimento(estoque, qtd, TipoMovimentacao.ENTRADA);
+        assertEquals(15, resultado);
+    }
 
-       MovimentacaoEstoqueService ms = new MovimentacaoEstoqueService();
+    @Test
+    void realizarSaida() {
+        int estoque = 15;
+        int qtd = 5;
+        int resultado = ms.registrarMovimento(estoque, qtd, TipoMovimentacao.SAIDA);
+        assertEquals(10, resultado);
+    }
 
-       estoque = ms.registrarMovimento(estoque, qtd, tpEntrada);
-
-        assertEquals(
-            15, estoque, "Estoque atual: " + estoque
+    @Test
+    void lancarExcecaoSaidaSemSaldo() {
+        int estoque = 10;
+        int qtd = 30;
+        EstoqueInvalidoException ex = assertThrows(
+                EstoqueInvalidoException.class,
+                () -> ms.registrarMovimento(estoque, 30, TipoMovimentacao.SAIDA)
         );
-
+        assertEquals("Saldo insuficiente. Estoque atual: 10, Saida solicitada: 30", ex.getMessage());
     }
 
 }
