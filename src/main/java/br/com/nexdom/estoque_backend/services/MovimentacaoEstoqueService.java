@@ -33,7 +33,7 @@ public class MovimentacaoEstoqueService {
     private void validarSaldoParaSaida(int estoqueAtual, int qtd) {
         if (estoqueAtual < qtd) {
             throw new EstoqueInvalidoException(
-                    "Saldo insuficiente. Estoque atual: " + estoqueAtual + ", solicitado: " + qtd
+                    "Saldo insuficiente. Estoque atual: " + estoqueAtual + ", Saida solicitada: " + qtd
             );
         }
     }
