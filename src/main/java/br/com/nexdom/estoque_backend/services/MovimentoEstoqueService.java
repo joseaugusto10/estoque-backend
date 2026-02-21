@@ -3,7 +3,7 @@ package br.com.nexdom.estoque_backend.services;
 import br.com.nexdom.estoque_backend.domain.enums.TipoMovimentacao;
 import br.com.nexdom.estoque_backend.exceptions.EstoqueInvalidoException;
 
-public class MovimentacaoEstoqueService {
+public class MovimentoEstoqueService {
 
 
     public int registrarMovimento(int estoqueAtual, int qtd, TipoMovimentacao tipo){

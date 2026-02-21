@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class MovimentacaoEstoqueServiceTest {
+public class MovimentoEstoqueServiceTest {
 
-    private final MovimentacaoEstoqueService ms = new MovimentacaoEstoqueService();
+    private final MovimentoEstoqueService ms = new MovimentoEstoqueService();
 
     @Test
     void realizarEntrada() {
