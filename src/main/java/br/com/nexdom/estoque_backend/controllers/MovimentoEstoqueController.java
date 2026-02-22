@@ -1,6 +1,7 @@
 package br.com.nexdom.estoque_backend.controllers;
 
 import br.com.nexdom.estoque_backend.domain.entities.MovimentoEstoque;
+import br.com.nexdom.estoque_backend.domain.enums.TipoMovimentacao;
 import br.com.nexdom.estoque_backend.dtos.movimento.MovimentoEstoqueCreateRequest;
 import br.com.nexdom.estoque_backend.dtos.movimento.MovimentoEstoqueResponse;
 import br.com.nexdom.estoque_backend.mappers.MovimentoEstoqueMapper;
@@ -38,9 +39,13 @@ public class MovimentoEstoqueController {
 
     @GetMapping
     public Page<MovimentoEstoqueResponse> listar(
+            @RequestParam(required = false) Long codigoProduto,
+            @RequestParam(required = false) TipoMovimentacao tipoMovimentacao,
             @PageableDefault(page = 0, size = 10, sort = "codigoMovimentacao", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return movimentoEstoqueService.listar(pageable).map(MovimentoEstoqueMapper::toResponse);
+        return movimentoEstoqueService
+                .listar(codigoProduto, tipoMovimentacao, pageable)
+                .map(MovimentoEstoqueMapper::toResponse);
     }
 
     @GetMapping("/{id}")

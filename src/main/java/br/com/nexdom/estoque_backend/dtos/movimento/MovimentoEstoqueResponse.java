@@ -9,6 +9,7 @@ public class MovimentoEstoqueResponse {
 
     private Long codigoMovimentacao;
     private Long codigoProduto;
+    private String descricaoProduto;
     private TipoMovimentacao tipoMovimentacao;
     private Integer qtdMovimentada;
     private BigDecimal valorVenda;
@@ -81,5 +82,13 @@ public class MovimentoEstoqueResponse {
 
     public void setEstoqueAtual(Integer estoqueAtual) {
         this.estoqueAtual = estoqueAtual;
+    }
+
+    public String getDescricaoProduto() {
+        return descricaoProduto;
+    }
+
+    public void setDescricaoProduto(String descricaoProduto) {
+        this.descricaoProduto = descricaoProduto;
     }
 }

@@ -28,7 +28,20 @@ public class MovimentoEstoqueService {
     }
 
     @Transactional(readOnly = true)
-    public Page<MovimentoEstoque> listar(Pageable pageable) {
+    public Page<MovimentoEstoque> listar(Long codigoProduto, TipoMovimentacao tipoMovimentacao, Pageable pageable) {
+
+        if (codigoProduto != null && tipoMovimentacao != null) {
+            return movimentoEstoqueRepository.findByProdutoCodigoAndTipoMovimentacao(codigoProduto, tipoMovimentacao, pageable);
+        }
+
+        if (codigoProduto != null) {
+            return movimentoEstoqueRepository.findByProdutoCodigo(codigoProduto, pageable);
+        }
+
+        if (tipoMovimentacao != null) {
+            return movimentoEstoqueRepository.findByTipoMovimentacao(tipoMovimentacao, pageable);
+        }
+
         return movimentoEstoqueRepository.findAll(pageable);
     }
 

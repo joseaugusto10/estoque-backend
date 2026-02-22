@@ -1,6 +1,7 @@
 package br.com.nexdom.estoque_backend.mappers;
 
 import br.com.nexdom.estoque_backend.domain.entities.MovimentoEstoque;
+import br.com.nexdom.estoque_backend.domain.entities.Produto;
 import br.com.nexdom.estoque_backend.dtos.movimento.MovimentoEstoqueResponse;
 
 public final class MovimentoEstoqueMapper {
@@ -11,20 +12,23 @@ public final class MovimentoEstoqueMapper {
     // Então esse mapper não cria entity, ele só mapeia Response.
 
     public static MovimentoEstoqueResponse toResponse(MovimentoEstoque movimentoEstoque) {
-        MovimentoEstoqueResponse movimentoEstoqueResponse = new MovimentoEstoqueResponse();
+        MovimentoEstoqueResponse response = new MovimentoEstoqueResponse();
 
-        movimentoEstoqueResponse.setCodigoMovimentacao(movimentoEstoque.getCodigoMovimentacao());
-        movimentoEstoqueResponse.setCodigoProduto(movimentoEstoque.getProduto() != null ? movimentoEstoque.getProduto().getCodigo() : null);
-        movimentoEstoqueResponse.setTipoMovimentacao(movimentoEstoque.getTipoMovimentacao());
-        movimentoEstoqueResponse.setQtdMovimentada(movimentoEstoque.getQtdMovimentada());
-        movimentoEstoqueResponse.setValorVenda(movimentoEstoque.getValorVenda());
-        movimentoEstoqueResponse.setDataVenda(movimentoEstoque.getDataVenda());
-        movimentoEstoqueResponse.setDataMovimento(movimentoEstoque.getDataMovimento());
+        response.setCodigoMovimentacao(movimentoEstoque.getCodigoMovimentacao());
+        response.setTipoMovimentacao(movimentoEstoque.getTipoMovimentacao());
+        response.setQtdMovimentada(movimentoEstoque.getQtdMovimentada());
+        response.setValorVenda(movimentoEstoque.getValorVenda());
+        response.setDataVenda(movimentoEstoque.getDataVenda());
+        response.setDataMovimento(movimentoEstoque.getDataMovimento());
 
-        if (movimentoEstoque.getProduto() != null) {
-            movimentoEstoqueResponse.setEstoqueAtual(movimentoEstoque.getProduto().getEstoque());
+        Produto produto = movimentoEstoque.getProduto();
+
+        if (produto != null) {
+            response.setCodigoProduto(produto.getCodigo());
+            response.setDescricaoProduto(produto.getDescricao());
+            response.setEstoqueAtual(produto.getEstoque());
         }
 
-        return movimentoEstoqueResponse;
+        return response;
     }
 }

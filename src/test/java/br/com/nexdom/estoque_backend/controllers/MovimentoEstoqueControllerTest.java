@@ -13,6 +13,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -24,6 +25,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -152,17 +154,19 @@ class MovimentoEstoqueControllerTest {
 
         PageRequest pageable = PageRequest.of(0, 10);
         Page<MovimentoEstoque> page = new PageImpl<>(List.of(movimentoEstoque), pageable, 1);
-
-        when(movimentoEstoqueService.listar(any())).thenReturn(page);
+        when(movimentoEstoqueService.listar(isNull(), isNull(), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/movimentos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].codigoMovimentacao").value(20))
                 .andExpect(jsonPath("$.content[0].codigoProduto").value(2))
+                .andExpect(jsonPath("$.content[0].descricaoProduto").value("Cadeira")) // ✅ NOVO
                 .andExpect(jsonPath("$.content[0].tipoMovimentacao").value("ENTRADA"))
                 .andExpect(jsonPath("$.content[0].qtdMovimentada").value(1))
                 .andExpect(jsonPath("$.content[0].dataMovimento").value("2026-02-22T13:00:00"))
                 .andExpect(jsonPath("$.content[0].estoqueAtual").value(9));
+
+        verify(movimentoEstoqueService).listar(isNull(), isNull(), any(Pageable.class));
     }
 
     @Test

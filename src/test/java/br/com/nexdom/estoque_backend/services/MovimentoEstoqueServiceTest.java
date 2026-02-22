@@ -4,8 +4,10 @@ import br.com.nexdom.estoque_backend.domain.entities.MovimentoEstoque;
 import br.com.nexdom.estoque_backend.domain.entities.Produto;
 import br.com.nexdom.estoque_backend.domain.enums.TipoMovimentacao;
 import br.com.nexdom.estoque_backend.domain.enums.TipoProduto;
+import br.com.nexdom.estoque_backend.dtos.movimento.MovimentoEstoqueResponse;
 import br.com.nexdom.estoque_backend.exceptions.EstoqueInvalidoException;
 import br.com.nexdom.estoque_backend.exceptions.RecursoNaoEncontradoException;
+import br.com.nexdom.estoque_backend.mappers.MovimentoEstoqueMapper;
 import br.com.nexdom.estoque_backend.repositories.MovimentoEstoqueRepository;
 import br.com.nexdom.estoque_backend.repositories.ProdutoRepository;
 import org.junit.jupiter.api.Test;
@@ -199,4 +201,38 @@ class MovimentoEstoqueServiceTest {
         produto.setEstoque(estoque);
         return produto;
     }
+
+    @Test
+    void mapearDescricaoDoProdutoECodigoProdutoEEstoqueAtual() {
+        Produto produto = new Produto();
+        produto.setCodigo(10L);
+        produto.setDescricao("Teclado Mecânico");
+        produto.setTipoProduto(TipoProduto.ELETRONICO);
+        produto.setValorNoFornecedor(new BigDecimal("220.00"));
+        produto.setEstoque(15);
+
+        MovimentoEstoque movimentoEstoque = new MovimentoEstoque();
+        movimentoEstoque.setCodigoMovimentacao(99L);
+        movimentoEstoque.setProduto(produto);
+        movimentoEstoque.setTipoMovimentacao(TipoMovimentacao.SAIDA);
+        movimentoEstoque.setQtdMovimentada(2);
+        movimentoEstoque.setValorVenda(new BigDecimal("299.90"));
+        movimentoEstoque.setDataVenda(LocalDateTime.of(2026, 2, 22, 10, 0));
+        movimentoEstoque.setDataMovimento(LocalDateTime.of(2026, 2, 22, 10, 5));
+
+        MovimentoEstoqueResponse res = MovimentoEstoqueMapper.toResponse(movimentoEstoque);
+
+        assertNotNull(res);
+        assertEquals(99L, res.getCodigoMovimentacao());
+        assertEquals(10L, res.getCodigoProduto());
+        assertEquals("Teclado Mecânico", res.getDescricaoProduto());
+        assertEquals(15, res.getEstoqueAtual());
+
+        assertEquals(TipoMovimentacao.SAIDA, res.getTipoMovimentacao());
+        assertEquals(2, res.getQtdMovimentada());
+        assertEquals(new BigDecimal("299.90"), res.getValorVenda());
+        assertEquals(LocalDateTime.of(2026, 2, 22, 10, 0), res.getDataVenda());
+        assertEquals(LocalDateTime.of(2026, 2, 22, 10, 5), res.getDataMovimento());
+    }
+
 }
