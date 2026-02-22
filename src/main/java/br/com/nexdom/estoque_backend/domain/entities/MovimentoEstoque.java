@@ -28,6 +28,9 @@ public class MovimentoEstoque {
     @Column(name = "data_venda")
     private LocalDateTime dataVenda;
 
+    @Column(name = "data_movimento", nullable = false)
+    private LocalDateTime dataMovimento;
+
     @Column(name = "qtd_movimentada", nullable = false)
     private Integer qtdMovimentada;
 
@@ -79,5 +82,13 @@ public class MovimentoEstoque {
 
     public void setQtdMovimentada(Integer qtdMovimentada) {
         this.qtdMovimentada = qtdMovimentada;
+    }
+
+    public LocalDateTime getDataMovimento() {
+        return dataMovimento;
+    }
+
+    public void setDataMovimento(LocalDateTime dataMovimento) {
+        this.dataMovimento = dataMovimento;
     }
 }
