@@ -5,6 +5,7 @@ import br.com.nexdom.estoque_backend.domain.enums.TipoMovimentacao;
 import br.com.nexdom.estoque_backend.domain.enums.TipoProduto;
 import br.com.nexdom.estoque_backend.dtos.produto.LucroProdutoResponse;
 import br.com.nexdom.estoque_backend.dtos.produto.ProdutoResumoResponse;
+import br.com.nexdom.estoque_backend.exceptions.RecursoDuplicadoException;
 import br.com.nexdom.estoque_backend.exceptions.RecursoNaoEncontradoException;
 import br.com.nexdom.estoque_backend.repositories.ProdutoRepository;
 import org.junit.jupiter.api.Test;
@@ -22,8 +23,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProdutoServiceTest {
@@ -185,4 +185,24 @@ class ProdutoServiceTest {
         assertTrue(ex.getMessage().contains("Produto não encontrado"));
         verify(produtoRepository).consultarLucroPorProduto(80L, TipoMovimentacao.SAIDA);
     }
+
+    @Test
+    void criarProdutoDuplicado() {
+
+        Produto produto = new Produto();
+        produto.setDescricao("Mouse");
+        produto.setTipoProduto(TipoProduto.ELETRONICO);
+        produto.setValorNoFornecedor(new BigDecimal("50.00"));
+        produto.setEstoque(10);
+
+        when(produtoRepository.existsByDescricaoIgnoreCase("Mouse")).thenReturn(true);
+
+        assertThrows(
+                RecursoDuplicadoException.class,
+                () -> produtoService.criar(produto)
+        );
+
+        verify(produtoRepository, never()).save(any());
+    }
+
 }

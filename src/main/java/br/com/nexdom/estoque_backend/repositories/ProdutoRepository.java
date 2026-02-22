@@ -16,6 +16,8 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
 
     Page<Produto> findByTipoProduto(TipoProduto tipoProduto, Pageable pageable);
 
+    boolean existsByDescricaoIgnoreCase(String descricao);
+
     @Query("""
         select new br.com.nexdom.estoque_backend.dtos.produto.ProdutoResumoResponse(
             p.codigo,

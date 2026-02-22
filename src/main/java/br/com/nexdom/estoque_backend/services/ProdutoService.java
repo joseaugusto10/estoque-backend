@@ -5,6 +5,7 @@ import br.com.nexdom.estoque_backend.domain.enums.TipoMovimentacao;
 import br.com.nexdom.estoque_backend.domain.enums.TipoProduto;
 import br.com.nexdom.estoque_backend.dtos.produto.LucroProdutoResponse;
 import br.com.nexdom.estoque_backend.dtos.produto.ProdutoResumoResponse;
+import br.com.nexdom.estoque_backend.exceptions.RecursoDuplicadoException;
 import br.com.nexdom.estoque_backend.exceptions.RecursoNaoEncontradoException;
 import br.com.nexdom.estoque_backend.repositories.ProdutoRepository;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,13 @@ public class ProdutoService {
 
     @Transactional
     public Produto criar(Produto produto) {
+        if (produto.getDescricao() != null &&
+                produtoRepository.existsByDescricaoIgnoreCase(produto.getDescricao())) {
+
+            throw new RecursoDuplicadoException(
+                    "Já existe um produto com a descrição: " + produto.getDescricao()
+            );
+        }
         return produtoRepository.save(produto);
     }
 
@@ -46,6 +54,14 @@ public class ProdutoService {
     public Produto atualizar(Long id, Produto dados) {
         Produto existente = buscarPorId(id);
 
+        if (dados.getDescricao() != null &&
+                !dados.getDescricao().equalsIgnoreCase(existente.getDescricao()) &&
+                produtoRepository.existsByDescricaoIgnoreCase(dados.getDescricao())) {
+
+            throw new RecursoDuplicadoException(
+                    "Já existe um produto com a descrição: " + dados.getDescricao()
+            );
+        }
         existente.setDescricao(dados.getDescricao());
         existente.setTipoProduto(dados.getTipoProduto());
         existente.setValorNoFornecedor(dados.getValorNoFornecedor());
