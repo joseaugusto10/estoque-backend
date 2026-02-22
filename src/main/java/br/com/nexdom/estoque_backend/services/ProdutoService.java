@@ -1,6 +1,7 @@
 package br.com.nexdom.estoque_backend.services;
 
 import br.com.nexdom.estoque_backend.domain.entities.Produto;
+import br.com.nexdom.estoque_backend.domain.enums.TipoProduto;
 import br.com.nexdom.estoque_backend.exceptions.RecursoNaoEncontradoException;
 import br.com.nexdom.estoque_backend.repositories.ProdutoRepository;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,10 @@ public class ProdutoService {
 
     public Page<Produto> listar(Pageable pageable) {
         return produtoRepository.findAll(pageable);
+    }
+
+    public Page<Produto> listarPorTipo(TipoProduto tipo, Pageable pageable) {
+        return produtoRepository.findByTipoProduto(tipo, pageable);
     }
 
     public Produto buscarPorId(Long id) {

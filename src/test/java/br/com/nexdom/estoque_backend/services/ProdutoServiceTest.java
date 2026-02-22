@@ -63,6 +63,19 @@ public class ProdutoServiceTest {
     }
 
     @Test
+    void listarProdutosPorTipo() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(produtoRepository.findByTipoProduto(TipoProduto.ELETRONICO, pageable))
+                .thenReturn(Page.empty(pageable));
+
+        Page<Produto> page = produtoService.listarPorTipo(TipoProduto.ELETRONICO, pageable);
+
+        assertNotNull(page);
+        verify(produtoRepository).findByTipoProduto(TipoProduto.ELETRONICO, pageable);
+    }
+
+    @Test
     void buscarPorId() {
         Produto produto = new Produto();
         produto.setCodigo(1L);
