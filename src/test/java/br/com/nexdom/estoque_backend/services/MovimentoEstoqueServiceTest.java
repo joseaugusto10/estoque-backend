@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class MovimentoEstoqueServiceTest {
+class MovimentoEstoqueServiceTest {
 
     @Mock
     private ProdutoRepository produtoRepository;
@@ -37,17 +37,10 @@ public class MovimentoEstoqueServiceTest {
 
     @Test
     void registrarEntrada() {
-
-        // aqui deve somar estoque, salvar produto e registrar movimento com dataMovimento preenchida
-        Produto produto = new Produto();
-        produto.setCodigo(1L);
-        produto.setDescricao("Mouse");
-        produto.setTipoProduto(TipoProduto.ELETRONICO);
-        produto.setValorNoFornecedor(new BigDecimal("50.00"));
-        produto.setEstoque(10);
+        Produto produto = produtoPadrao(10);
 
         when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
-        when(produtoRepository.save(any())).thenReturn(produto);
+        when(produtoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(movimentoEstoqueRepository.save(any(MovimentoEstoque.class))).thenAnswer(inv -> inv.getArgument(0));
 
         MovimentoEstoque mov = movimentoEstoqueService.registrarMovimento(
@@ -68,17 +61,10 @@ public class MovimentoEstoqueServiceTest {
 
     @Test
     void registrarSaida() {
-
-        //  aqui deve diminuir o estoque, salvar produto e registrar movimento com valorVenda, dataVenda e dataMovimento
-        Produto produto = new Produto();
-        produto.setCodigo(1L);
-        produto.setDescricao("Teclado");
-        produto.setTipoProduto(TipoProduto.ELETRONICO);
-        produto.setValorNoFornecedor(new BigDecimal("30.00"));
-        produto.setEstoque(10);
+        Produto produto = produtoPadrao(10);
 
         when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
-        when(produtoRepository.save(any())).thenReturn(produto);
+        when(produtoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(movimentoEstoqueRepository.save(any(MovimentoEstoque.class))).thenAnswer(inv -> inv.getArgument(0));
 
         BigDecimal valorVenda = new BigDecimal("100.00");
@@ -101,16 +87,25 @@ public class MovimentoEstoqueServiceTest {
     }
 
     @Test
-    void registrarSaidaSemSaldo() {
+    void registrarSaidaComDataVendaNull() {
+        Produto produto = produtoPadrao(10);
 
-        // aqui deve lançar exceção e não salvar nada quando não houver saldo suficiente
-        Produto produto = new Produto();
-        produto.setCodigo(1L);
-        produto.setDescricao("Monitor");
-        produto.setTipoProduto(TipoProduto.ELETRONICO);
-        produto.setValorNoFornecedor(new BigDecimal("500.00"));
-        produto.setEstoque(3);
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(produtoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(movimentoEstoqueRepository.save(any(MovimentoEstoque.class))).thenAnswer(inv -> inv.getArgument(0));
 
+        MovimentoEstoque mov = movimentoEstoqueService.registrarMovimento(
+                1L, TipoMovimentacao.SAIDA, 1, new BigDecimal("20.00"), null
+        );
+
+        assertNotNull(mov.getDataVenda());
+        assertNotNull(mov.getDataMovimento());
+        assertEquals(9, produto.getEstoque());
+    }
+
+    @Test
+    void lancarExcecaoQuandoSaidaSemSaldo() {
+        Produto produto = produtoPadrao(3);
         when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
 
         EstoqueInvalidoException ex = assertThrows(
@@ -127,9 +122,7 @@ public class MovimentoEstoqueServiceTest {
     }
 
     @Test
-    void registrarProdutoInexistente() {
-
-        // aqui deve lançar exceção quando produto não existir
+    void lancarExcecaoQuandoProdutoNaoExiste() {
         when(produtoRepository.findById(80L)).thenReturn(Optional.empty());
 
         RecursoNaoEncontradoException ex = assertThrows(
@@ -146,16 +139,8 @@ public class MovimentoEstoqueServiceTest {
     }
 
     @Test
-    void registrarSaidaSemValorVenda() {
-
-        // aqui deve lançar exceção quando saída não informar valorVenda
-        Produto produto = new Produto();
-        produto.setCodigo(1L);
-        produto.setDescricao("Cadeira");
-        produto.setTipoProduto(TipoProduto.MOVEL);
-        produto.setValorNoFornecedor(new BigDecimal("80.00"));
-        produto.setEstoque(10);
-
+    void lancarExcecaoQuandoSaidaSemValorVenda() {
+        Produto produto = produtoPadrao(10);
         when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
 
         EstoqueInvalidoException ex = assertThrows(
@@ -171,4 +156,47 @@ public class MovimentoEstoqueServiceTest {
         verify(movimentoEstoqueRepository, never()).save(any());
     }
 
+    @Test
+    void lancarExcecaoQuandoTipoNull() {
+        Produto produto = produtoPadrao(10);
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+
+        EstoqueInvalidoException ex = assertThrows(
+                EstoqueInvalidoException.class,
+                () -> movimentoEstoqueService.registrarMovimento(
+                        1L, null, 1, null, null
+                )
+        );
+
+        assertEquals("Tipo de movimentação é obrigatório.", ex.getMessage());
+        verify(produtoRepository, never()).save(any());
+        verify(movimentoEstoqueRepository, never()).save(any());
+    }
+
+    @Test
+    void lancarExcecaoQuantidadeInvalida() {
+        Produto produto = produtoPadrao(10);
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+
+        EstoqueInvalidoException ex = assertThrows(
+                EstoqueInvalidoException.class,
+                () -> movimentoEstoqueService.registrarMovimento(
+                        1L, TipoMovimentacao.ENTRADA, 0, null, null
+                )
+        );
+
+        assertTrue(ex.getMessage().contains("Quantidade deve ser maior que zero"));
+        verify(produtoRepository, never()).save(any());
+        verify(movimentoEstoqueRepository, never()).save(any());
+    }
+
+    private Produto produtoPadrao(int estoque) {
+        Produto produto = new Produto();
+        produto.setCodigo(1L);
+        produto.setDescricao("Produto X");
+        produto.setTipoProduto(TipoProduto.ELETRONICO);
+        produto.setValorNoFornecedor(new BigDecimal("50.00"));
+        produto.setEstoque(estoque);
+        return produto;
+    }
 }

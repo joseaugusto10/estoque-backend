@@ -7,7 +7,10 @@ import br.com.nexdom.estoque_backend.exceptions.EstoqueInvalidoException;
 import br.com.nexdom.estoque_backend.exceptions.RecursoNaoEncontradoException;
 import br.com.nexdom.estoque_backend.repositories.MovimentoEstoqueRepository;
 import br.com.nexdom.estoque_backend.repositories.ProdutoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,27 +27,35 @@ public class MovimentoEstoqueService {
         this.movimentoEstoqueRepository = movimentoEstoqueRepository;
     }
 
-    public MovimentoEstoque registrarMovimento(Long codigoProduto,
-                                               TipoMovimentacao tipoMovimentacao,
-                                               Integer qtdMovimentada,
-                                               BigDecimal valorVenda,
-                                               LocalDateTime dataVenda) {
+    @Transactional(readOnly = true)
+    public Page<MovimentoEstoque> listar(Pageable pageable) {
+        return movimentoEstoqueRepository.findAll(pageable);
+    }
 
-        if (codigoProduto == null) {
-            throw new EstoqueInvalidoException("Código do produto é obrigatório.");
-        }
+    @Transactional(readOnly = true)
+    public MovimentoEstoque buscarPorId(Long id) {
+        return movimentoEstoqueRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Movimento não encontrado: " + id));
+    }
+
+    @Transactional
+    public MovimentoEstoque registrarMovimento(
+            Long codigoProduto,
+            TipoMovimentacao tipoMovimentacao,
+            Integer qtdMovimentada,
+            BigDecimal valorVenda,
+            LocalDateTime dataVenda
+    ) {
+        validarCodigoProduto(codigoProduto);
 
         Produto produto = produtoRepository.findById(codigoProduto)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + codigoProduto));
 
         validarParametros(produto.getEstoque(), qtdMovimentada, tipoMovimentacao);
-        LocalDateTime dataMovimento = LocalDateTime.now();
 
-
+        // regras específicas para saída
         if (tipoMovimentacao == TipoMovimentacao.SAIDA) {
-            if (valorVenda == null) {
-                throw new EstoqueInvalidoException("Valor de venda é obrigatório para saída.");
-            }
+            validarSaida(valorVenda);
             if (dataVenda == null) {
                 dataVenda = LocalDateTime.now();
             }
@@ -54,8 +65,8 @@ public class MovimentoEstoqueService {
             dataVenda = null;
         }
 
+        LocalDateTime dataMovimento = LocalDateTime.now();
         int novoEstoque = calcularNovoEstoque(produto.getEstoque(), qtdMovimentada, tipoMovimentacao);
-
         produto.setEstoque(novoEstoque);
         Produto produtoSalvo = produtoRepository.save(produto);
 
@@ -70,9 +81,24 @@ public class MovimentoEstoqueService {
         return movimentoEstoqueRepository.save(movimento);
     }
 
-    private void validarParametros(int estoqueAtual, Integer qtd, TipoMovimentacao tipo) {
+    private void validarCodigoProduto(Long codigoProduto) {
+        if (codigoProduto == null) {
+            throw new EstoqueInvalidoException("Código do produto é obrigatório.");
+        }
+    }
+
+    private void validarSaida(BigDecimal valorVenda) {
+        if (valorVenda == null) {
+            throw new EstoqueInvalidoException("Valor de venda é obrigatório para saída.");
+        }
+    }
+
+    private void validarParametros(Integer estoqueAtual, Integer qtd, TipoMovimentacao tipo) {
         if (tipo == null) {
             throw new EstoqueInvalidoException("Tipo de movimentação é obrigatório.");
+        }
+        if (estoqueAtual == null) {
+            throw new EstoqueInvalidoException("Estoque atual é obrigatório.");
         }
         if (estoqueAtual < 0) {
             throw new EstoqueInvalidoException("Estoque atual não pode ser negativo: " + estoqueAtual);

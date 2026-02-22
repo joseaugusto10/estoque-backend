@@ -2,9 +2,7 @@ package br.com.nexdom.estoque_backend.controllers;
 
 import br.com.nexdom.estoque_backend.domain.entities.Produto;
 import br.com.nexdom.estoque_backend.domain.enums.TipoProduto;
-import br.com.nexdom.estoque_backend.dtos.produto.ProdutoCreateRequest;
-import br.com.nexdom.estoque_backend.dtos.produto.ProdutoResponse;
-import br.com.nexdom.estoque_backend.dtos.produto.ProdutoUpdateRequest;
+import br.com.nexdom.estoque_backend.dtos.produto.*;
 import br.com.nexdom.estoque_backend.mappers.ProdutoMapper;
 import br.com.nexdom.estoque_backend.services.ProdutoService;
 import jakarta.validation.Valid;
@@ -27,8 +25,8 @@ public class ProdutoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ProdutoResponse criar(@Valid @RequestBody ProdutoCreateRequest produtoCreateRequest) {
-        Produto criado = produtoService.criar(ProdutoMapper.toEntity(produtoCreateRequest));
+    public ProdutoResponse criar(@Valid @RequestBody ProdutoCreateRequest req) {
+        Produto criado = produtoService.criar(ProdutoMapper.toEntity(req));
         return ProdutoMapper.toResponse(criado);
     }
 
@@ -49,10 +47,8 @@ public class ProdutoController {
         return ProdutoMapper.toResponse(produtoService.buscarPorId(id));
     }
 
-
     @PutMapping("/{id}")
-    public ProdutoResponse atualizar(@PathVariable Long id,
-                                     @Valid @RequestBody ProdutoUpdateRequest req) {
+    public ProdutoResponse atualizar(@PathVariable Long id, @Valid @RequestBody ProdutoUpdateRequest req) {
         Produto atualizado = produtoService.atualizar(id, ProdutoMapper.toEntity(req));
         return ProdutoMapper.toResponse(atualizado);
     }
@@ -62,4 +58,18 @@ public class ProdutoController {
     public void excluir(@PathVariable Long id) {
         produtoService.excluir(id);
     }
+
+    @GetMapping("/resumo")
+    public Page<ProdutoResumoResponse> listarResumo(
+            @PageableDefault(page = 0, size = 10, sort = "codigo", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) TipoProduto tipo
+    ) {
+        return produtoService.listarResumoPorTipo(tipo, pageable);
+    }
+
+    @GetMapping("/{id}/lucro")
+    public LucroProdutoResponse consultarLucro(@PathVariable Long id) {
+        return produtoService.consultarLucroPorProduto(id);
+    }
+
 }
