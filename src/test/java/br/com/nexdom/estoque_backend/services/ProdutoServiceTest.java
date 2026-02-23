@@ -205,4 +205,18 @@ class ProdutoServiceTest {
         verify(produtoRepository, never()).save(any());
     }
 
+    @Test
+    void listarProdutosPorDescricao() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("codigo").descending());
+
+        when(produtoRepository.findByDescricaoContainingIgnoreCase("mou", pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        Page<Produto> page = produtoService.listarPorDescricao("mou", pageable);
+
+        assertNotNull(page);
+        verify(produtoRepository).findByDescricaoContainingIgnoreCase("mou", pageable);
+        verify(produtoRepository, never()).findAll(pageable);
+    }
+
 }

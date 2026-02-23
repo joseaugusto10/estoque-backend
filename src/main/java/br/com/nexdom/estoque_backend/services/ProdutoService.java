@@ -45,6 +45,14 @@ public class ProdutoService {
     }
 
     @Transactional(readOnly = true)
+    public Page<Produto> listarPorDescricao(String descricao, Pageable pageable) {
+        if (descricao == null || descricao.trim().isEmpty()) {
+            return produtoRepository.findAll(pageable);
+        }
+        return produtoRepository.findByDescricaoContainingIgnoreCase(descricao.trim(), pageable);
+    }
+
+    @Transactional(readOnly = true)
     public Produto buscarPorId(Long id) {
         return produtoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + id));

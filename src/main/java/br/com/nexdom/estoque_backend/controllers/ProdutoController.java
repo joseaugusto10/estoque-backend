@@ -33,11 +33,20 @@ public class ProdutoController {
     @GetMapping
     public Page<ProdutoResponse> listar(
             @PageableDefault(page = 0, size = 10, sort = "codigo", direction = Sort.Direction.DESC) Pageable pageable,
-            @RequestParam(required = false) TipoProduto tipo
+            @RequestParam(required = false) TipoProduto tipo,
+            @RequestParam(required = false) String descricao
     ) {
-        Page<Produto> produtos = (tipo == null)
-                ? produtoService.listar(pageable)
-                : produtoService.listarPorTipo(tipo, pageable);
+        boolean temDescricao = (descricao != null && !descricao.trim().isEmpty());
+
+        Page<Produto> produtos;
+
+        if (temDescricao) {
+            produtos = produtoService.listarPorDescricao(descricao, pageable);
+        } else {
+            produtos = (tipo == null)
+                    ? produtoService.listar(pageable)
+                    : produtoService.listarPorTipo(tipo, pageable);
+        }
 
         return produtos.map(ProdutoMapper::toResponse);
     }
