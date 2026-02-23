@@ -6,11 +6,14 @@ import br.com.nexdom.estoque_backend.domain.enums.TipoProduto;
 import br.com.nexdom.estoque_backend.dtos.produto.LucroProdutoResponse;
 import br.com.nexdom.estoque_backend.dtos.produto.ProdutoResumoResponse;
 import br.com.nexdom.estoque_backend.exceptions.RecursoDuplicadoException;
+import br.com.nexdom.estoque_backend.exceptions.RecursoEmUsoException;
 import br.com.nexdom.estoque_backend.exceptions.RecursoNaoEncontradoException;
+import br.com.nexdom.estoque_backend.repositories.MovimentoEstoqueRepository;
 import br.com.nexdom.estoque_backend.repositories.ProdutoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,6 +33,9 @@ class ProdutoServiceTest {
 
     @Mock
     private ProdutoRepository produtoRepository;
+
+    @Mock
+    private MovimentoEstoqueRepository movimentoEstoqueRepository;
 
     @InjectMocks
     private ProdutoService produtoService;
@@ -217,6 +223,35 @@ class ProdutoServiceTest {
         assertNotNull(page);
         verify(produtoRepository).findByDescricaoContainingIgnoreCase("mou", pageable);
         verify(produtoRepository, never()).findAll(pageable);
+    }
+
+    @Test
+    void lancarExcecaoAoExcluirProdutoComMovimentacoes() {
+        when(produtoRepository.existsById(1L)).thenReturn(true);
+        when(movimentoEstoqueRepository.existsByProdutoCodigo(1L)).thenReturn(true);
+
+        RecursoEmUsoException ex = assertThrows(
+                RecursoEmUsoException.class,
+                () -> produtoService.excluir(1L)
+        );
+
+        assertTrue(ex.getMessage().toLowerCase().contains("movimentações"));
+
+        verify(produtoRepository).existsById(1L);
+        verify(movimentoEstoqueRepository).existsByProdutoCodigo(1L);
+        verify(produtoRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void excluirComMovimentacoesDeveApagarMovimentosEDepoisApagarProduto() {
+        when(produtoRepository.existsById(1L)).thenReturn(true);
+        produtoService.excluirComMovimentacoes(1L);
+
+        InOrder inOrder = inOrder(movimentoEstoqueRepository, produtoRepository);
+        inOrder.verify(movimentoEstoqueRepository).deleteByProdutoCodigo(1L);
+        inOrder.verify(produtoRepository).deleteById(1L);
+
+        verify(produtoRepository).existsById(1L);
     }
 
 }

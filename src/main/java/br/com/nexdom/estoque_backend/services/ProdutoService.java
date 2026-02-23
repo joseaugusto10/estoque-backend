@@ -6,8 +6,11 @@ import br.com.nexdom.estoque_backend.domain.enums.TipoProduto;
 import br.com.nexdom.estoque_backend.dtos.produto.LucroProdutoResponse;
 import br.com.nexdom.estoque_backend.dtos.produto.ProdutoResumoResponse;
 import br.com.nexdom.estoque_backend.exceptions.RecursoDuplicadoException;
+import br.com.nexdom.estoque_backend.exceptions.RecursoEmUsoException;
 import br.com.nexdom.estoque_backend.exceptions.RecursoNaoEncontradoException;
+import br.com.nexdom.estoque_backend.repositories.MovimentoEstoqueRepository;
 import br.com.nexdom.estoque_backend.repositories.ProdutoRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,9 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
+    private final MovimentoEstoqueRepository movimentoEstoqueRepository;
 
-    public ProdutoService(ProdutoRepository produtoRepository) {
+    public ProdutoService(ProdutoRepository produtoRepository, MovimentoEstoqueRepository movimentoEstoqueRepository) {
         this.produtoRepository = produtoRepository;
+        this.movimentoEstoqueRepository = movimentoEstoqueRepository;
     }
 
     @Transactional
@@ -83,6 +88,22 @@ public class ProdutoService {
         if (!produtoRepository.existsById(id)) {
             throw new RecursoNaoEncontradoException("Produto não encontrado: " + id);
         }
+
+        boolean temMovimentacoes = movimentoEstoqueRepository.existsByProdutoCodigo(id);
+        if (temMovimentacoes) {
+            throw new RecursoEmUsoException(
+                    "Não é possível excluir o produto porque existem movimentações vinculadas."
+            );
+        }
+        produtoRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void excluirComMovimentacoes(Long id) {
+        if (!produtoRepository.existsById(id)) {
+            throw new RecursoNaoEncontradoException("Produto não encontrado: " + id);
+        }
+        movimentoEstoqueRepository.deleteByProdutoCodigo(id);
         produtoRepository.deleteById(id);
     }
 

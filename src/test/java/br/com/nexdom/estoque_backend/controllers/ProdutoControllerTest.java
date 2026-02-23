@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -216,5 +217,13 @@ class ProdutoControllerTest {
                 .andExpect(jsonPath("$.tipoProduto").value("ELETRONICO"))
                 .andExpect(jsonPath("$.quantidadeTotalSaida").value(7))
                 .andExpect(jsonPath("$.lucroTotal").value(350.00));
+    }
+
+    @Test
+    void excluirProdutoForcado() throws Exception {
+        mockMvc.perform(delete("/produtos/1/forcar"))
+                .andExpect(status().isNoContent());
+
+        verify(produtoService).excluirComMovimentacoes(1L);
     }
 }

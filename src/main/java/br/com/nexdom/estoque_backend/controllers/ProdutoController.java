@@ -68,6 +68,12 @@ public class ProdutoController {
         produtoService.excluir(id);
     }
 
+    @DeleteMapping("/{id}/forcar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void excluirForcado(@PathVariable Long id) {
+        produtoService.excluirComMovimentacoes(id);
+    }
+
     @GetMapping("/resumo")
     public Page<ProdutoResumoResponse> listarResumo(
             @PageableDefault(page = 0, size = 10, sort = "codigo", direction = Sort.Direction.DESC) Pageable pageable,
